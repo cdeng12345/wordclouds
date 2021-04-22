@@ -1,0 +1,433 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>External SVG + D3</title>
+        <script src="//d3js.org/d3.v6.min.js" charset="utf-8"></script>
+        <script src="/d3/d3.min.js"></script>
+        <style type="text/css">
+            body {font: 14px GillSansRegular, "Gill Sans MT", "Gill Sans", "Trebuchet MS", sans-serif; width: 1200px;}
+            .canvas {position: relative}
+            .genre {padding: 0px 2px; position: absolute; white-space: nowrap; cursor: pointer; overflow: hidden; font-size:125%; z-index:999; font-weight:900; text-align:center}
+            .genre:hover { font-size:150%}
+            .genre[played]:before {content: "�B" !important; color: black !important}
+            #mirror .genre:hover {color: white !important}
+            #mirror .genre[played]:before {content: "�B" !important; color: white !important}
+            #mirror .current.genre[played]:before {color: gray !important}
+            .genrelink {padding: 0px 2px; position: absolute; white-space: nowrap;}
+            #mirror .genre[played] {color: #E6ADB7 !important}
+            .title {float: left; font-weight: bold; font-size: 200%; margin-right: 32px}
+            .title a {color: black}
+            .showsong {position: absolute; left: 300px}
+            form {display: inline; white-space: nowrap;}
+            a, .related a {text-decoration: none; color: teal}
+            a:hover, .fakelink:hover {color: FireBrick !important}
+            .fakelink {cursor: pointer; color: teal}
+            .genre.current {font-weight: bold; padding: 1px 2px; background: whitesmoke; border-color: black; border-style: solid;
+                border-width: 1px 1px 1px 8px; z-index: 1000}
+            .genre.current .navlink {background: whitesmoke}
+            .navlink {display: none; color: FireBrick; background: white; padding: 0px 2px}
+            #mirror .navlink {background: inherit}
+            .navlink:hover {color: white !important; background: black !important}
+            .genre.current .navlink, .genre:hover .navlink, .genrelink:hover .navlink {display: inline; z-index: 10000}
+            .genrelink:hover .navlink {color: black}
+            .related {color: gray; margin-top: 32px; width: 1500px;}
+            .related a {white-space: nowrap}
+            .volcontrol {display: none; color: silver; cursor: pointer;font-weight: normal; font-size: 16px;}
+            
+            ul {
+                list-style-type: none;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                background-color: #333;
+            }
+            
+            li {
+                float: left;
+            }
+            
+            li a, .dropbtn {
+                display: inline-block;
+                color: white;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
+            }
+            
+            li a:hover, .dropdown:hover .dropbtn {
+                background-color: red;
+            }
+            
+            .blurtext {
+                -webkit-filter: blur(20px);
+                -moz-filter: blur(20px);
+                -o-filter: blur(20px);
+                -ms-filter: blur(20px);
+                filter: blur(20px);
+                position: absolute;
+                font-weight:800;                
+            }
+            
+            li.dropdown {
+                display: inline-block;
+            }
+            
+            .dropdown-content {
+                display: none;
+                position: absolute;
+                background-color: #f9f9f9;
+                min-width: 160px;
+                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                z-index: 100;
+            }
+            
+            .dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                text-align: left;
+                z-index: 100;
+            }
+            
+            .dropdown-content a:hover {background-color: #f1f1f1}
+            
+            .show {display:block;}
+            
+            #bottombar {
+                top: 5;
+                left: 5;
+                position: fixed;
+                color: white;
+                right: 0;
+                text-align: left;
+            }
+            #dimbar {
+                top: 0;
+                right: 5;
+                color: white;
+                position: fixed;
+                right: 0;
+                text-align: left;
+            }
+            
+            a {
+                -webkit-transition: all 200ms cubic-bezier(0.390, 0.500, 0.150, 1.360);
+                -moz-transition: all 200ms cubic-bezier(0.390, 0.500, 0.150, 1.360);
+                -ms-transition: all 200ms cubic-bezier(0.390, 0.500, 0.150, 1.360);
+                -o-transition: all 200ms cubic-bezier(0.390, 0.500, 0.150, 1.360);
+                transition: all 200ms cubic-bezier(0.390, 0.500, 0.150, 1.360);
+                display: block;
+                margin: 20px auto;
+                max-width: 180px;
+                text-decoration: none;
+                border-radius: 4px;
+                padding: 10px 15px;
+            }
+            .tooltip {
+                position: absolute;
+                font-size: 12px;
+                width:  auto;
+                height: auto;
+                pointer-events: none;
+                /* background-color: white; */
+            }
+            
+            a.button {
+                color: rgba(255,255,255, 0.6);
+                box-shadow: rgba(200, 200, 200, 0.4) 0 0px 0px 2px inset;
+            }
+
+            a.button:hover {
+                color: rgba(255, 255, 255, 0.85);
+                box-shadow: rgba(30, 22, 54, 0.7) 0 0px 0px 40px inset;
+            }
+            
+                
+    .ylabel  { -ms-transform: rotate(-90deg); -webkit-transform: rotate(-90deg); transform: rotate(-90deg); transform-origin: top left;}
+    </style>
+    </head>
+    <body>
+        <script src="https://d3js.org/d3.v6.min.js" charset="utf-8"></script>
+        <script src="https://d3js.org/d3-fetch.v2.min.js"></script>
+        <div id="main">
+            <div id="some_content">
+                <h1>An animated SVG file</h1>
+                <h2>Using d3.js</h2>
+            </div>
+            <div class=canvas id="allratings" style="position:absolute; width: 1200px; height: 800px; top: 50px; float:left">
+                <div id=item1 class="genre scanme" style="color: #53A25B; top: 61.3857px; left: 527.126px;" onclick="displayCloud();">A</div>
+                <div id="cloud1" style="position:absolute; top: 61.3857px; left: 547.126px; width:50px; height:50px; display:none;"></div>
+                <div id=item1 class="genre scanme" style="color: #712D76; top: 63.3857px; left: 520.126px;" onclick="alert('clicked');">M</div>
+            </div>
+            <div id="map_container">
+            </div>
+            <div id="my_dataviz">
+            </div>
+        </div>
+    </body>
+    <script>
+        var maproot = null;
+        var file = null;
+        // d3.image("/Word clouds/C1A_CA13Arkansas TFIDF.png").then(function(data) {
+        //     console.log(data);
+        //     d3.select("#map_container").node().append(data)
+        // });
+        d3.svg("/story_in_2Dembd_space_tolbright.svg").then(function(data) {
+            console.log(data);
+            // "xml" is the XML DOM tree
+            console.log(data.documentElement);
+            d3.select("#map_container").node().append(data.documentElement)
+        });
+        function displayCloud(){
+            var yourUl = document.getElementById("cloud1");
+            yourUl.innerHTML = '';
+            yourUl.style.display = yourUl.style.display === 'none' ? '' : 'none';
+            d3.image("/Word clouds/C1A_CA13Arkansas TFIDF.png").then(function(data) {
+                console.log(data);
+                d3.select("#cloud1").node().append(data)
+            });
+        }
+    </script>
+    <script>
+        var margin = {top: 20, right: 100, bottom: 29, left: 39};
+        var w = 899;
+        var h = 899;
+
+        var x = d3.scaleLinear()
+                .range([-1, w]);
+
+        var y = d3.scaleLinear()
+                .range([h, -1]);
+
+        var svg = d3.select("#my_dataviz")
+                    .append("svg")
+                    .attr("width", w + margin.left + margin.right)
+                    .attr("height", h + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var defs = svg.append("defs").attr("id", "imgdefs")
+
+        var clipPath = defs.append('clipPath').attr('id', 'clip-circle')
+        .append("circle")
+            .attr("r", 40)
+            .attr("cy", 0)
+            .attr("cx", 96);
+
+
+        // Grab the data
+        d3.csv('embedding_space_coordinates.csv')
+            .then(function(data) {
+                var mydata = [];
+                var concentration = [],
+                    uptake = [];
+                // data is now whole data set
+                // draw chart in here!
+                data.forEach(function(d){
+                mydata.push({rating: parseFloat(+d.X),
+                            color: d.color,
+                            letter: d.place,
+                            sample: d.sample,
+                            file: d.file,
+                            winsNoms: parseFloat(+d.Y)
+                });
+            });
+                for (var i=0; i<mydata.length; i++) {
+                    concentration.push(-mydata[i].winsNoms);
+                    uptake.push(parseFloat(mydata[i].rating));
+                }
+
+        var x = d3.scaleLinear()
+            .domain([d3.min(concentration)-1, d3.max(concentration)+1])
+            .range([-1, w]);
+        var y = d3.scaleLinear()
+            .domain([d3.min(uptake)-1, d3.max(uptake)+1])
+            .range([h, -1]);
+        // // Create some scales
+        // x.domain([0,10]);
+
+        // //d3.extent(data, function(d) { return d.x; }));
+        // y.domain([-10,10]);
+
+        // Stick the x axis in...
+        svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(-1," + h + ")")
+        .call(d3.axisBottom(x));
+
+        // and the y axis.
+        svg.append("g")
+        .attr("class", "y axis")
+        .call(d3.axisLeft(y));
+
+        svg.append("g")
+        .append("text")
+        .attr("class", "titleText")
+        .attr("y", margin.top)
+        .attr("x", w / 2 + margin.left)
+        .style("text-anchor", "end")
+        .text(" Wins+Nominations vs. IMDb Rating");
+
+
+        // Put the crosses in to place (i.e. the points)
+        // svg.selectAll("scatterplot")
+        //      .data(uptake)
+        //      .enter().append("svg:circle")
+        //      .attr("cy", function(d) {
+        //         console.log(d);
+        //         return y(d); } )
+        //      .attr("cx", function(d,i) {
+        //          console.log(concentration[i]);
+        //         return x(concentration[i]); } )
+        //      .style("fill", "brown")
+        //      .attr("r", 3);
+
+        // console.log(mydata);
+
+        // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+        // Its opacity is set to 0: we don't see it by default.
+        // Add the tooltip container to the vis container
+        // it's invisible and its position/contents are defined during mouseover
+        var tooltip = d3.select("#my_dataviz").append("div");
+        tooltip.attr("class", "tooltip").style("opacity");
+
+
+        // tooltip mouseout event handler
+        var tipMouseout = function(event, d) {
+            tipMouseover(event, d);
+            // tooltip.transition()
+            //     .duration(300) // ms
+            //     .style("opacity", 0); // don't care about position!
+        };
+
+        svg.selectAll(".point")
+        .data(mydata)
+        .enter()
+        .append('g')
+        .attr('id', function(d) {
+            return d.sample;
+        })
+        .append('text')
+        .text(function(d) {
+            // console.log(d.letter);
+            return d.letter;
+        })
+        .style("fill", function(d) {
+            // console.log(d.color);
+            return d.color;
+        })
+        .style("font-size", "25px")
+        .attr("transform", function(d) {
+            // console.log(-d.winsNoms, d.rating);
+            return "translate(" + x(-d.winsNoms) + "," + y(d.rating) + ")";
+        })
+        .on("click", tipMouseout)
+        // .append('image')
+        // .style("left", function(d) {
+        //     var x = -d.winsNoms + 15; 
+        //     var word = "" + x; 
+        //     word = word + "px"; 
+        //     console.log(word); 
+        //     return word;
+        // })
+        // .style("top", function(d) {
+        //     return (d.rating-28) + "px";
+        // })
+        // .attr("class", "tooltip")
+        // .style("display", "none");
+
+        // tooltip mouseover event handler
+        var tipMouseover = function(event, d) {
+            // alert('clicked');
+            const[x_coor,y_coor] = d3.pointer(event);
+            // console.log(x,y);
+            // console.log(d.sample);
+            var yourUl = d3.select("#" + d.sample).node();
+            console.log(yourUl);
+            // var img = "/Word clouds/FluShot.png"; 
+            var img = "/Word clouds/" + d.file;
+            // d3.select("#" + d.sample).style("width", "50px")
+            //             .style("height", "50px")
+            //             .attr("x", x)
+            //             .attr('y', y)
+            //             .attr("transform", function(d) {
+            //                 // console.log(-d.winsNoms, d.rating);
+            //                 return "translate(" + (-d.winsNoms) + "," + d.rating + ")";
+            //             })
+            //             .style("display", "").attr('xlink:href', img);  
+            // console.log(d3.select("#" + d.sample).node());
+            d3.select("#"+d.sample).html('').append('text')
+            .text(function(d) {
+                // console.log(d.letter);
+                return d.letter;
+            })
+            .style("fill", function(d) {
+                // console.log(d.color);
+                return d.color;
+            })
+            .style("font-size", "25px")
+            .attr("transform", function(d) {
+                // console.log(-d.winsNoms, d.rating);
+                return "translate(" + x(-d.winsNoms) + "," + y(d.rating) + ")";
+            })
+            .on("click", tipMouseout);
+            d3.image(img).then(function(data) {
+                d3.select("#"+d.sample).append("image")
+                        // .style("left", (x + 15) + "px")
+                        // .style("top", (y - 28) + "px")
+                        .attr("x", x_coor)
+                        .attr('y', y_coor-75)
+                        .attr("transform", function(d) {
+                            // console.log(-d.winsNoms, d.rating);
+                            return "translate(" + (x(-d.winsNoms)+15) + "," + (y(d.rating)-28) + ")";
+                        })
+                        .style("width", "160")
+                        .style("height", "160")
+                        .style("border-radius", "50%")
+                        // .style("position", "absolute")
+                        .attr('xlink:href', img)
+                        .attr("clip-path", "url(#clip-circle)");
+
+                        d3.select("#"+d.sample).append('line')
+                        .style('stroke-width', 1)
+                        .style('stroke', 'black')
+                        .attr("transform", function(d) {
+                            // console.log(-d.winsNoms, d.rating);
+                            return "translate(" + (x(-d.winsNoms)+20) + "," + (y(d.rating)+7) + ")";
+                        })
+                        .attr('x1', -d.winsNoms+3)
+                        .attr('y1', d.rating-25)
+                        .attr("x2", x_coor+45)
+                        .attr('y2', y_coor-10);
+
+                console.log(d3.select("#"+d.sample).node());
+                // yourUl.append(data);
+                        // .transition().duration(200) // ms
+                        // .style("opacity", .9)
+                        
+                
+            });
+            // yourUl.text(data) 
+            //         .style("left", (x + 15) + "px")
+            //         .style("top", (y - 28) + "px")
+            //     .transition()
+            //         .duration(200) // ms
+            //         .style("opacity", .9) // started as 0!
+            // var color = d.color;
+            // var html  = d.color + "<br/>" +
+            //             "<span style='color:" + color + ";'>" + d.color + "</span><br/>" +
+            //             "<b>" + d.color + "</b>" + d.color + "<b>" + d.color + "</b> calories";
+
+            // tooltip.html(html)
+            //     .style("left", (x + 15) + "px")
+            //     .style("top", (y - 28) + "px")
+            // .transition()
+            //     .duration(200) // ms
+            //     .style("opacity", .9) // started as 0!
+
+        };
+
+        });
+    </script>
+</html>
