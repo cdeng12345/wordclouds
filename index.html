@@ -318,6 +318,7 @@
             return d.color;
         })
         .style("font-size", "25px")
+        .style("cursor", "pointer")
         .attr("transform", function(d) {
             // console.log(-d.winsNoms, d.rating);
             return "translate(" + x(-d.winsNoms) + "," + y(d.rating) + ")";
