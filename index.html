@@ -155,11 +155,11 @@
                 <h1>An animated SVG file</h1>
                 <h2>Using d3.js</h2>
             </div>
-            <div class=canvas id="allratings" style="position:absolute; width: 1200px; height: 800px; top: 50px; float:left">
+            <!-- <div class=canvas id="allratings" style="position:absolute; width: 1200px; height: 800px; top: 50px; float:left">
                 <div id=item1 class="genre scanme" style="color: #53A25B; top: 61.3857px; left: 527.126px;" onclick="displayCloud();">A</div>
                 <div id="cloud1" style="position:absolute; top: 61.3857px; left: 547.126px; width:50px; height:50px; display:none;"></div>
                 <div id=item1 class="genre scanme" style="color: #712D76; top: 63.3857px; left: 520.126px;" onclick="alert('clicked');">M</div>
-            </div>
+            </div> -->
             <div id="map_container">
             </div>
             <div id="my_dataviz">
@@ -173,21 +173,21 @@
         //     console.log(data);
         //     d3.select("#map_container").node().append(data)
         // });
-        // d3.svg("/story_in_2Dembd_space_tolbright.svg").then(function(data) {
-        //     console.log(data);
-        //     // "xml" is the XML DOM tree
-        //     console.log(data.documentElement);
-        //     d3.select("#map_container").node().append(data.documentElement)
-        // });
-        function displayCloud(){
-            var yourUl = document.getElementById("cloud1");
-            yourUl.innerHTML = '';
-            yourUl.style.display = yourUl.style.display === 'none' ? '' : 'none';
-            d3.image("/Word clouds/C1A_CA13Arkansas TFIDF.png").then(function(data) {
-                console.log(data);
-                d3.select("#cloud1").node().append(data)
-            });
-        }
+        d3.svg("/story_in_2Dembd_space_tolbright.svg").then(function(data) {
+            // console.log(data);
+            // // "xml" is the XML DOM tree
+            // console.log(data.documentElement);
+            d3.select("#map_container").node().append(data.documentElement);
+        });
+        // function displayCloud(){
+        //     var yourUl = document.getElementById("cloud1");
+        //     yourUl.innerHTML = '';
+        //     yourUl.style.display = yourUl.style.display === 'none' ? '' : 'none';
+        //     d3.image("/Word clouds/C1A_CA13Arkansas TFIDF.png").then(function(data) {
+        //         console.log(data);
+        //         d3.select("#cloud1").node().append(data);
+        //     });
+        // }
     </script>
     <script>
         var margin = {top: 20, right: 100, bottom: 29, left: 39};
@@ -339,7 +339,7 @@
 
         // tooltip mouseover event handler
         var tipMouseover = function(event, d) {
-            alert('clicked');
+            // alert('clicked');
             const[x_coor,y_coor] = d3.pointer(event);
             // console.log(x,y);
             // console.log(d.sample);
